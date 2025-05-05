@@ -1,8 +1,10 @@
 import { db } from "@/app/_lib/prisma"
 import { Button } from "@/components/ui/button"
+import ServiceItem from "@/components/ui/service-item"
 import { ChevronLeftIcon, MapPinIcon, MenuIcon, StarIcon } from "lucide-react"
 import Link from "next/dist/client/link"
 import Image from "next/image"
+import { notFound } from "next/navigation"
 
 interface BarbershopPageProps {
   params: {
@@ -16,7 +18,17 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
     where: {
       id: params.id,
     },
+    include: {
+      //inclui o serviço de outra tabela referenciada
+      services: true,
+    },
   })
+
+  if (!barbershop) {
+    //para de dar o erro do typescript, que indicava que pode ser nulo
+    return notFound()
+  }
+
   return (
     <div>
       {/* IMAGEM */}
@@ -48,12 +60,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
         </Button>
       </div>
       <div className="border-b border-solid p-5">
-        <h1 className="mb-3 text-xl font-bold">{barbershop?.name}</h1>
-        <div className="mb-2 flex items-center gap-1">
+        <h1 className="mb-3 text-xl font-bold">{barbershop.name}</h1>
+        <div className="mb-2 flex items-center gap-2">
           <MapPinIcon className="text-primary" size={18} />
           <p className="text-sm">{barbershop?.address}</p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <StarIcon className="fill-primary text-primary" size={18} />
           <p className="text-sm">5.0 (499 avaliações) </p>
         </div>
@@ -63,6 +75,15 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       <div className="space-y-2 border-b border-solid p-5">
         <h2 className="text-xs font-bold uppercase text-gray-400">Sobre Nós</h2>
         <p className="text-justify text-sm">{barbershop?.description}</p>
+      </div>
+
+      <div className="space-y-3 p-5">
+        <h2 className="text-xs font-bold uppercase text-gray-400">Serviços</h2>
+        <div className="space-y-2">
+          {barbershop.services.map((service) => (
+            <ServiceItem key={service.id} service={service} />
+          ))}
+        </div>
       </div>
     </div>
   )
