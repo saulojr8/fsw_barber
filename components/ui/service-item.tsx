@@ -15,7 +15,7 @@ import {
 import { Calendar } from "./calendar"
 import { ptBR } from "date-fns/locale"
 import { useEffect, useState } from "react"
-import { format, set } from "date-fns"
+import { format, isPast, isToday, set } from "date-fns"
 import { createBooking } from "@/app/_actions/create-booking"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
@@ -55,10 +55,20 @@ const TIME_LIST = [
   "19:00",
 ]
 
-const getTimeList = (bookings: Booking[]) => {
+interface GetTimeListProps {
+  bookings: Booking[]
+  selectedDay: Date
+}
+
+const getTimeList = ({ bookings, selectedDay }: GetTimeListProps) => {
   return TIME_LIST.filter((time) => {
     const hour = Number(time.split(":")[0])
     const minutes = Number(time.split(":")[1])
+
+    const timeIsOnThePast = isPast(set(new Date(), { hours: hour, minutes }))
+    if (timeIsOnThePast && isToday(selectedDay)) {
+      return false
+    }
 
     const hasBookingonCurrentTime = bookings.some(
       (booking) =>
@@ -216,7 +226,10 @@ const ServiceItem = ({ service, barbershop }: ServiceItemProps) => {
 
                   {selectedDay && ( //a div dos horários só irá aparecer se o usuário clicar na data
                     <div className="flex gap-3 overflow-x-auto border-b border-solid p-5 px-5 [&::-webkit-scrollbar]:hidden">
-                      {getTimeList(dayBookings).map((time) => (
+                      {getTimeList({
+                        bookings: dayBookings,
+                        selectedDay,
+                      }).map((time) => (
                         <Button
                           key={time}
                           variant={
